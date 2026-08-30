@@ -17,6 +17,7 @@ import { OrganizationSkillHeatmap } from './components/Admin/OrganizationSkillHe
 import { SysAdminSettings } from './components/SysAdmin/SysAdminSettings';
 import { KarmAiAssistantChat } from './components/KarmAiAssistantChat';
 import { SihDemoModeModal } from './components/SihDemoModeModal';
+import { ClosedLoopJudgeDemo } from './components/ClosedLoopJudgeDemo';
 import { CourseDetailModal } from './components/CourseDetailModal';
 
 import { karmaAiService, MOCK_GENERATED_MCQS } from './services/karmaiService';
@@ -135,12 +136,17 @@ export function App() {
       <Navbar
         activeTab={activeTab}
         setActiveTab={(tab) => {
-          if (tab === 'sih-demo') setIsSihDemoModalOpen(true);
-          else setActiveTab(tab);
+          setActiveTab(tab);
+          if (tab === 'sih-demo') {
+            setIsSihDemoModalOpen(true);
+          }
         }}
         currentRole={currentRole}
         onChangeRole={handleChangeRole}
-        onLaunchJudgeDemo={() => setIsSihDemoModalOpen(true)}
+        onLaunchJudgeDemo={() => {
+          setActiveTab('sih-demo');
+          setIsSihDemoModalOpen(true);
+        }}
         onToggleChatAssistant={() => setIsChatAssistantOpen(true)}
         onLogout={() => setViewState('LOGIN')}
       />
@@ -276,6 +282,11 @@ export function App() {
             {activeTab === 'sys-settings' && <SysAdminSettings />}
             {activeTab === 'sys-framework' && <SysAdminSettings />}
             {activeTab === 'sys-integrations' && <SysAdminSettings />}
+
+            {/* SIH JUDGE DEMO VIEW */}
+            {activeTab === 'sih-demo' && (
+              <ClosedLoopJudgeDemo onCompleteDemo={() => setActiveTab('dashboard')} />
+            )}
           </>
         )}
 

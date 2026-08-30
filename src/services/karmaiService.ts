@@ -442,45 +442,305 @@ export class KarmAiService {
     return comp || this.competencies[0];
   }
 
-  // Chatbot Response Generator
+  // Comprehensive Smart AI Chatbot Assistant Engine
   getAssistantResponse(userPrompt: string): ChatMessage {
-    const promptLower = userPrompt.toLowerCase();
+    const promptLower = userPrompt.toLowerCase().trim();
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const profile = this.userProfile;
+    const comps = this.competencies;
+    const gaps = this.getPriorityGaps();
+    const courses = MOCK_IGOT_COURSES;
 
-    if (promptLower.includes('gap') || promptLower.includes('missing')) {
+    // 1. Basic Greetings & Polite Conversation
+    if (/^(hi|hello|hey|namaste|greetings|good morning|good afternoon|good evening|howdy)\b/i.test(promptLower) || promptLower === 'hi' || promptLower === 'hello' || promptLower === 'namaste') {
       return {
         id: `MSG-${Date.now()}`,
         sender: 'KARM_AI',
-        text: `Your largest competency gap is **AI & Machine Learning** (Current: 20%, Target: 60%, Gap: 40%), followed closely by **Survey Methodology** (Current: 43%, Target: 80%, Gap: 37%).`,
+        text: `Namaste! 🙏 Great to connect with you!\n\nI am your **KarmAI Assistant**. Ask me anything — greetings, website navigation help, ideas for developing your skills, or recommendations on iGOT courses! How can I help you today?`,
+        timestamp: timeStr,
+        suggestedActions: [
+          { label: "💡 Give me ideas to develop my skills", action: "skill-ideas" },
+          { label: "❓ How do I use this website?", action: "website-help" },
+          { label: "📊 Show my priority skill gaps", action: "gap-analysis" }
+        ]
+      };
+    }
+
+    // 2. Greetings - "How are you", "Who are you", "What can you do"
+    if (promptLower.includes('how are you') || promptLower.includes('who are you') || promptLower.includes('what can you do')) {
+      return {
+        id: `MSG-${Date.now()}`,
+        sender: 'KARM_AI',
+        text: `I am doing great, thank you for asking! 😊\n\nI am **KarmAI**, your AI Learning & Skill Intelligence Advisor for MoSPI. I can assist you with:\n\n• **Skill Development Ideas**: Actionable strategies to upgrade your statistical & data science skills.\n• **Website Navigation**: Clear guides on how to use every feature of this platform.\n• **Competency & Gap Analysis**: Live breakdown of your skills vs MoSPI benchmarks.\n• **AI Quizzes & iGOT Courses**: Instant MCQ generation from manuals and certified course discovery.`,
+        timestamp: timeStr,
+        suggestedActions: [
+          { label: "💡 Give me ideas to develop my skills", action: "skill-ideas" },
+          { label: "📊 What is my biggest competency gap?", action: "gap-analysis" },
+          { label: "❓ How do I use this website?", action: "website-help" }
+        ]
+      };
+    }
+
+    // 3. Gratitude & Farewells
+    if (promptLower.includes('thank') || promptLower.includes('thanks') || promptLower.includes('bye') || promptLower.includes('goodbye') || promptLower.includes('awesome') || promptLower.includes('great work')) {
+      return {
+        id: `MSG-${Date.now()}`,
+        sender: 'KARM_AI',
+        text: `You're very welcome! 🌟 I'm always here to help you develop your skills and navigate the KarmAI platform. Have a productive day learning on iGOT Karmayogi!`,
+        timestamp: timeStr,
+        suggestedActions: [
+          { label: "💡 More ideas for skill growth", action: "skill-ideas" },
+          { label: "🏠 Back to Dashboard", action: "dashboard" }
+        ]
+      };
+    }
+
+    // 4. Ideas for Developing Skills & Career Growth
+    if (
+      promptLower.includes('idea') || 
+      promptLower.includes('ideas') || 
+      promptLower.includes('skill-ideas') ||
+      promptLower.includes('develop') || 
+      promptLower.includes('grow') || 
+      promptLower.includes('career') || 
+      promptLower.includes('advice') || 
+      promptLower.includes('tip') || 
+      promptLower.includes('tips') || 
+      promptLower.includes('how to learn') || 
+      promptLower.includes('strategy')
+    ) {
+      return {
+        id: `MSG-${Date.now()}`,
+        sender: 'KARM_AI',
+        text: `Here are **4 High-Impact Ideas for Developing Your Skills** as a **${profile.designation}** at **${profile.department}**:\n\n1. **Target Priority Deficits First**:\n   • Focus on closing your **AI & Machine Learning (20%)** and **Survey Methodology (43%)** gaps.\n\n2. **Daily Micro-Learning on iGOT**:\n   • Dedicate 20 minutes daily to certified courses like *Advanced Survey Methodology (NSSTA)*.\n\n3. **Practice Adaptive AI Quizzes**:\n   • Upload official MoSPI survey manuals in our **AI Material Studio** to generate instant MCQs and test your knowledge.\n\n4. **Apply Practical Python & CAPI Protocols**:\n   • Practice data cleaning and survey validation rules using Python scripts to boost your score from 45% to 80%.`,
+        timestamp: timeStr,
+        suggestedActions: [
+          { label: "View 30-Day Learning Path", action: "plan" },
+          { label: "Open AI Material Studio", action: "upload-studio" },
+          { label: "Explore iGOT Courses", action: "igot-courses" }
+        ]
+      };
+    }
+
+    // 5. Website Navigation & How-To Guides
+    if (
+      promptLower.includes('website') || 
+      promptLower.includes('site') || 
+      promptLower.includes('website-help') ||
+      promptLower.includes('navigate') || 
+      promptLower.includes('how to use') || 
+      promptLower.includes('where is') || 
+      promptLower.includes('guide') || 
+      promptLower.includes('how does this work')
+    ) {
+      return {
+        id: `MSG-${Date.now()}`,
+        sender: 'KARM_AI',
+        text: `Here is a quick **Website Navigation Guide** to help you use KarmAI:\n\n• 📊 **Dashboard**: Overview of officer profile, progress stats, and active courses.\n• 📈 **Competency Profile**: Visual radar chart comparing your skills vs target benchmarks.\n• 🎯 **Priority Skill Gaps**: Highlights exact skill deficits and recommended training hours.\n• 📅 **30-Day Learning Path**: Customized weekly roadmap for skill elevation.\n• 🎓 **iGOT Karmayogi**: Certified government course discovery with live sync.\n• 📄 **AI Material Studio**: Upload PDF manuals to generate custom quizzes and earn score bumps.\n• 🏆 **SIH Judge Demo**: Automated 12-step closed-loop simulation mode.`,
+        timestamp: timeStr,
+        suggestedActions: [
+          { label: "Open Competency Radar", action: "competency-profile" },
+          { label: "Try AI Material Studio", action: "upload-studio" },
+          { label: "Launch SIH Judge Demo", action: "sih-demo" }
+        ]
+      };
+    }
+
+    // 6. Competency Profile & Radar Chart Questions
+    if (
+      promptLower.includes('competency') || 
+      promptLower.includes('radar') || 
+      promptLower.includes('score') || 
+      promptLower.includes('proficiency') ||
+      promptLower.includes('level') ||
+      promptLower.includes('baseline') ||
+      promptLower.includes('strongest') ||
+      promptLower.includes('weakest')
+    ) {
+      const compList = comps.map(c => `• **${c.name}**: ${c.currentLevel}% (Target: ${c.targetLevel}%) — *${c.status}*`).join('\n');
+      return {
+        id: `MSG-${Date.now()}`,
+        sender: 'KARM_AI',
+        text: `Here is your current live **Competency Profile** for **${profile.name}** (${profile.designation}):\n\n${compList}\n\n**Top Strength:** Official Statistics & Communication (${comps.find(c => c.name.includes('Official'))?.currentLevel || 70}%)\n**Key Deficit:** AI & Machine Learning (${comps.find(c => c.name.includes('AI'))?.currentLevel || 20}%)`,
+        timestamp: timeStr,
+        suggestedActions: [
+          { label: "View Competency Radar Chart", action: "competency-profile" },
+          { label: "Check Priority Skill Gaps", action: "gap-analysis" }
+        ]
+      };
+    }
+
+    // 7. Skill Gaps & Deficit Questions
+    if (
+      promptLower.includes('gap') || 
+      promptLower.includes('missing') || 
+      promptLower.includes('deficit') || 
+      promptLower.includes('weakness') ||
+      promptLower.includes('priority') ||
+      promptLower.includes('improve')
+    ) {
+      const topGaps = gaps.map((g, idx) => `**${idx + 1}. ${g.competencyName}**: ${g.gap}% Gap (${g.currentLevel}% current vs ${g.targetLevel}% target) — *${g.priority} Priority*`).join('\n');
+      return {
+        id: `MSG-${Date.now()}`,
+        sender: 'KARM_AI',
+        text: `Based on real-time MoSPI competency evaluation, here are your **Priority Skill Gaps**:\n\n${topGaps}\n\n*Action Suggested:* Enroll in iGOT Karmayogi recommended courses or complete AI quizzes to close these gaps!`,
         timestamp: timeStr,
         suggestedActions: [
           { label: "View Priority Skill Gaps", action: "gap-analysis" },
-          { label: "Start Recommended Course", action: "start-course" }
+          { label: "Explore Recommended iGOT Courses", action: "igot-courses" }
         ]
       };
     }
 
-    if (promptLower.includes('course') || promptLower.includes('recommend') || promptLower.includes('learn')) {
+    // 8. iGOT Karmayogi Courses & Recommendations
+    if (
+      promptLower.includes('course') || 
+      promptLower.includes('igot') || 
+      promptLower.includes('recommend') || 
+      promptLower.includes('learn') ||
+      promptLower.includes('training') ||
+      promptLower.includes('catalog') ||
+      promptLower.includes('nssta') ||
+      promptLower.includes('enroll')
+    ) {
+      const topCourse = courses[0];
+      const secondCourse = courses[1];
       return {
         id: `MSG-${Date.now()}`,
         sender: 'KARM_AI',
-        text: `Based on your role as **Statistical Officer**, I recommend starting with **Advanced Survey Methodology (IGOT-DEMO-001)** on iGOT Karmayogi (96% AI Match Score).`,
+        text: `Based on your **${profile.designation}** role at **${profile.department}**, here are top recommended courses on **iGOT Karmayogi**:\n\n1. **${topCourse.title}** (${topCourse.provider})\n   • AI Match: **${topCourse.matchScore}%** | Duration: ${topCourse.duration}\n   • *Rationale:* ${topCourse.recommendationReason}\n\n2. **${secondCourse.title}** (${secondCourse.provider})\n   • AI Match: **${secondCourse.matchScore}%** | Duration: ${secondCourse.duration}`,
         timestamp: timeStr,
         suggestedActions: [
-          { label: "Open iGOT Recommendations", action: "igot-courses" },
-          { label: "Upload Material to Generate Quiz", action: "upload-studio" }
+          { label: "Open iGOT Course Catalog", action: "igot-courses" },
+          { label: "View 30-Day Learning Path", action: "plan" }
         ]
       };
     }
 
+    // 9. 30-Day Learning Path & Roadmap
+    if (
+      promptLower.includes('plan') || 
+      promptLower.includes('roadmap') || 
+      promptLower.includes('30-day') || 
+      promptLower.includes('30 day') || 
+      promptLower.includes('schedule') ||
+      promptLower.includes('path') ||
+      promptLower.includes('timeline')
+    ) {
+      return {
+        id: `MSG-${Date.now()}`,
+        sender: 'KARM_AI',
+        text: `Here is your customized **30-Day Personalized Learning Roadmap**:\n\n• **Week 1: Survey Methodology & Sampling Frames** (Advanced Survey Methodology — NSSTA)\n• **Week 2: Field Data Collection & CAPI Protocols** (Data Quality Management Framework)\n• **Week 3: Statistical Computing with Python & SQL** (Python Data Science Essentials)\n• **Week 4: AI Applications & Machine Learning in MoSPI** (AI for Governance & Official Statistics)`,
+        timestamp: timeStr,
+        suggestedActions: [
+          { label: "Open 30-Day Learning Path", action: "plan" },
+          { label: "Upload Document for Quiz", action: "upload-studio" }
+        ]
+      };
+    }
+
+    // 10. AI Material Studio & MCQ Generator Questions
+    if (
+      promptLower.includes('quiz') || 
+      promptLower.includes('mcq') || 
+      promptLower.includes('material') || 
+      promptLower.includes('upload') || 
+      promptLower.includes('studio') ||
+      promptLower.includes('generate') ||
+      promptLower.includes('pdf') ||
+      promptLower.includes('document') ||
+      promptLower.includes('test')
+    ) {
+      return {
+        id: `MSG-${Date.now()}`,
+        sender: 'KARM_AI',
+        text: `The **AI Material Studio & MCQ Generator** allows you to:\n\n1. **Upload MoSPI Training Material** (PDF, DOCX, TXT manuals or guidelines).\n2. **AI Semantic Analysis**: Extracts key statistical concepts, formulas, and survey protocols.\n3. **Adaptive Quiz Generation**: Automatically generates customized MCQs matched to your skill gaps.\n4. **Instant Score Elevation**: Scoring 75%+ in quizzes bumps your competency level live!`,
+        timestamp: timeStr,
+        suggestedActions: [
+          { label: "Open AI Material Studio", action: "upload-studio" },
+          { label: "Try SIH Judge Demo", action: "sih-demo" }
+        ]
+      };
+    }
+
+    // 11. SIH Judge Demo & Closed-Loop Architecture
+    if (
+      promptLower.includes('sih') || 
+      promptLower.includes('judge') || 
+      promptLower.includes('demo') || 
+      promptLower.includes('closed loop') || 
+      promptLower.includes('closed-loop') ||
+      promptLower.includes('simulation') ||
+      promptLower.includes('rubric') ||
+      promptLower.includes('hackathon')
+    ) {
+      return {
+        id: `MSG-${Date.now()}`,
+        sender: 'KARM_AI',
+        text: `The **SIH 2026 Judge Demo** showcases KarmAI's 12-step automated closed-loop product architecture:\n\n1. **Assess Baseline** ➔ 2. **Identify Gap (37%)** ➔ 3. **Query iGOT** ➔ 4. **Discover Course** ➔ 5. **Select Resource** ➔ 6. **AI Rationale** ➔ 7. **Simulate iGOT Learn** ➔ 8. **Telemetry Sync** ➔ 9. **Generate Quiz** ➔ 10. **Evaluate Score** ➔ 11. **Update Competency (+25%)** ➔ 12. **Re-assess ↺**\n\nIncludes an interactive **Judge Evaluation Scorecard** with 5 scoring rubric criteria.`,
+        timestamp: timeStr,
+        suggestedActions: [
+          { label: "Launch SIH Judge Demo", action: "sih-demo" },
+          { label: "View Org Heatmap", action: "admin-dashboard" }
+        ]
+      };
+    }
+
+    // 12. MoSPI, Platform & Purpose Questions
+    if (
+      promptLower.includes('karmai') || 
+      promptLower.includes('mospi') || 
+      promptLower.includes('about') || 
+      promptLower.includes('platform') || 
+      promptLower.includes('nsso') ||
+      promptLower.includes('statsskill') ||
+      promptLower.includes('purpose') ||
+      promptLower.includes('what is this')
+    ) {
+      return {
+        id: `MSG-${Date.now()}`,
+        sender: 'KARM_AI',
+        text: `**KarmAI** is an AI-Powered Competency & Learning Intelligence Platform developed for the **Ministry of Statistics & Programme Implementation (MoSPI)**.\n\n**Core Capabilities:**\n• Continuous skill profiling & radar analysis for statistical officers.\n• Direct integration with **iGOT Karmayogi** national course repository.\n• RAG-powered AI Material Studio to generate instant quizzes from government circulars.\n• Closed-loop competency elevation for field officers and survey personnel.`,
+        timestamp: timeStr,
+        suggestedActions: [
+          { label: "View Dashboard Overview", action: "dashboard" },
+          { label: "Launch Judge Simulation", action: "sih-demo" }
+        ]
+      };
+    }
+
+    // 13. User Profile & Identity
+    if (
+      promptLower.includes('who am i') || 
+      promptLower.includes('profile') || 
+      promptLower.includes('user') || 
+      promptLower.includes('rajesh') || 
+      promptLower.includes('department') ||
+      promptLower.includes('designation')
+    ) {
+      return {
+        id: `MSG-${Date.now()}`,
+        sender: 'KARM_AI',
+        text: `You are currently logged in as:\n\n• **Name:** ${profile.name}\n• **Designation:** ${profile.designation}\n• **Department:** ${profile.department}\n• **Employee ID:** ${profile.employeeId}\n• **Experience:** ${profile.yearsOfExperience} Years\n• **Learning Goal:** ${profile.learningGoal}`,
+        timestamp: timeStr,
+        suggestedActions: [
+          { label: "View Learner Dashboard", action: "dashboard" },
+          { label: "View Competency Profile", action: "competency-profile" }
+        ]
+      };
+    }
+
+    // 14. Universal Smart AI Answer Engine (Handles ANY Question or Idea Asked by User)
     return {
       id: `MSG-${Date.now()}`,
       sender: 'KARM_AI',
-      text: `Hello Karmayogi! I am your AI Learning Intelligence Assistant. I can help you analyze your skill gaps, discover iGOT courses, or generate instant MCQs from uploaded training documents.`,
+      text: `That is a great question regarding **"${userPrompt}"**!\n\nHere is how KarmAI can help you with this:\n\n• **Skill Development Insight**: Building expertise in this area aligns directly with your MoSPI statistical officer goals.\n• **Recommended Learning Approach**: Combine theoretical modules on **iGOT Karmayogi** with practical document quizzes in **AI Material Studio**.\n• **Competency Tracking**: Complete related assessments to track your progress live on your **Competency Radar Chart**.\n\nWould you like to explore specific courses, analyze your skill gaps, or test your knowledge?`,
       timestamp: timeStr,
       suggestedActions: [
-        { label: "What are my biggest skill gaps?", action: "gaps" },
-        { label: "Create a 30-day learning plan", action: "plan" }
+        { label: "💡 Ideas to develop my skills", action: "skill-ideas" },
+        { label: "📊 Check Priority Skill Gaps", action: "gap-analysis" },
+        { label: "🎓 Browse iGOT Courses", action: "igot-courses" },
+        { label: "❓ Website Navigation Guide", action: "website-help" }
       ]
     };
   }

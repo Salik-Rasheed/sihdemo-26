@@ -45,7 +45,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'learning-path', label: '30-Day Learning Path', icon: BookOpen },
     { id: 'igot-courses', label: 'iGOT Karmayogi', icon: Award },
     { id: 'material-studio', label: 'AI Material Studio & Quiz', icon: FileText },
-    { id: 'sih-demo', label: 'SIH Judge Demo', icon: PlayCircle, highlight: true },
   ];
 
   const adminTabs = [
@@ -54,14 +53,12 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'training-effectiveness', label: 'Training Effectiveness', icon: Award },
     { id: 'competency-framework', label: 'Competency Framework', icon: GitBranch },
     { id: 'material-studio', label: 'Material & MCQ Studio', icon: FileText },
-    { id: 'sih-demo', label: 'SIH Judge Demo', icon: PlayCircle, highlight: true },
   ];
 
   const sysAdminTabs = [
     { id: 'sys-settings', label: 'User & Role Management', icon: Users },
     { id: 'sys-framework', label: 'Framework Config', icon: Settings },
     { id: 'sys-integrations', label: 'iGOT API & OAuth Settings', icon: ShieldCheck },
-    { id: 'sih-demo', label: 'SIH Judge Demo', icon: PlayCircle, highlight: true },
   ];
 
   const activeNavItems = 
@@ -156,8 +153,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className={`flex items-center space-x-2 px-3.5 py-1.5 rounded text-xs font-bold whitespace-nowrap transition ${
                   isActive
                     ? 'bg-slate-900 text-white shadow-sm'
-                    : item.highlight
-                    ? 'bg-orange-50 text-orange-900 hover:bg-orange-100 border border-orange-200'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >

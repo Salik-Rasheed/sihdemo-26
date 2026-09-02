@@ -28,7 +28,7 @@ export const DEFAULT_USER_PROFILE: UserProfile = {
   existingSkills: ["Statistical Analysis", "Data Collection", "Excel", "Sampling Design"]
 };
 
-// 2. Initial Competency Profile (6 Core Competencies)
+// 2. Initial Competency Profile (6 Core Competencies with Evidence Backing)
 export const DEFAULT_COMPETENCIES: CompetencyItem[] = [
   {
     id: "COMP-001",
@@ -38,7 +38,40 @@ export const DEFAULT_COMPETENCIES: CompetencyItem[] = [
     targetLevel: 80,
     gap: 37,
     status: "CRITICAL",
-    lastAssessed: "Today"
+    lastAssessed: "Today",
+    confidenceScore: 94,
+    evidenceList: [
+      {
+        id: "EV-101",
+        competencyId: "COMP-001",
+        competencyName: "Survey Methodology",
+        evidenceType: "Diagnostic Assessment",
+        title: "MoSPI Baseline Statistical Officer Diagnostic",
+        score: 42,
+        details: "Assessed multi-stage cluster sampling, non-response re-weighting, and design effect calculations.",
+        dateAssessed: "2026-08-20"
+      },
+      {
+        id: "EV-102",
+        competencyId: "COMP-001",
+        competencyName: "Survey Methodology",
+        evidenceType: "Quiz Performance",
+        title: "NSSO CAPI Protocol Validation Quiz",
+        score: 45,
+        details: "Evaluated CAPI logical range checks and field enumeration error control.",
+        dateAssessed: "2026-08-25"
+      },
+      {
+        id: "EV-103",
+        competencyId: "COMP-001",
+        competencyName: "Survey Methodology",
+        evidenceType: "Practical Task",
+        title: "PLFS Field Enumeration Audit",
+        score: 41,
+        details: "Practical audit of household sampling selection and schedule completion accuracy.",
+        dateAssessed: "2026-08-28"
+      }
+    ]
   },
   {
     id: "COMP-002",
@@ -48,7 +81,30 @@ export const DEFAULT_COMPETENCIES: CompetencyItem[] = [
     targetLevel: 80,
     gap: 35,
     status: "NEEDS_IMPROVEMENT",
-    lastAssessed: "Yesterday"
+    lastAssessed: "Yesterday",
+    confidenceScore: 91,
+    evidenceList: [
+      {
+        id: "EV-201",
+        competencyId: "COMP-002",
+        competencyName: "Python for Data Science",
+        evidenceType: "Diagnostic Assessment",
+        title: "Python Data Processing Baseline",
+        score: 40,
+        details: "Tested pandas microdata manipulation, numpy array operations, and automated script execution.",
+        dateAssessed: "2026-08-15"
+      },
+      {
+        id: "EV-202",
+        competencyId: "COMP-002",
+        competencyName: "Python for Data Science",
+        evidenceType: "Practical Task",
+        title: "ASI Microdata Cleaning Script",
+        score: 50,
+        details: "Wrote automated data cleaning pipeline for factory survey schedules.",
+        dateAssessed: "2026-08-30"
+      }
+    ]
   },
   {
     id: "COMP-003",
@@ -58,7 +114,30 @@ export const DEFAULT_COMPETENCIES: CompetencyItem[] = [
     targetLevel: 75,
     gap: 35,
     status: "NEEDS_IMPROVEMENT",
-    lastAssessed: "3 days ago"
+    lastAssessed: "3 days ago",
+    confidenceScore: 89,
+    evidenceList: [
+      {
+        id: "EV-301",
+        competencyId: "COMP-003",
+        competencyName: "SQL & Data Engineering",
+        evidenceType: "Diagnostic Assessment",
+        title: "Relational Query & Indexing Assessment",
+        score: 38,
+        details: "Evaluated JOIN operations, window functions, and database view creation on microdata tables.",
+        dateAssessed: "2026-08-12"
+      },
+      {
+        id: "EV-302",
+        competencyId: "COMP-003",
+        competencyName: "SQL & Data Engineering",
+        evidenceType: "Quiz Performance",
+        title: "NIC Registry Schema Practical",
+        score: 42,
+        details: "Tested multi-table linkage and foreign key integrity constraint enforcement.",
+        dateAssessed: "2026-08-29"
+      }
+    ]
   },
   {
     id: "COMP-004",
@@ -68,7 +147,20 @@ export const DEFAULT_COMPETENCIES: CompetencyItem[] = [
     targetLevel: 80,
     gap: 25,
     status: "MODERATE",
-    lastAssessed: "1 week ago"
+    lastAssessed: "1 week ago",
+    confidenceScore: 93,
+    evidenceList: [
+      {
+        id: "EV-401",
+        competencyId: "COMP-004",
+        competencyName: "Data Visualization & Dashboards",
+        evidenceType: "Practical Task",
+        title: "Executive Indicator Dashboard Assignment",
+        score: 55,
+        details: "Built choropleth district maps and time-series line charts for price index reporting.",
+        dateAssessed: "2026-08-22"
+      }
+    ]
   },
   {
     id: "COMP-005",
@@ -78,7 +170,20 @@ export const DEFAULT_COMPETENCIES: CompetencyItem[] = [
     targetLevel: 60,
     gap: 40,
     status: "CRITICAL",
-    lastAssessed: "Today"
+    lastAssessed: "Today",
+    confidenceScore: 96,
+    evidenceList: [
+      {
+        id: "EV-501",
+        competencyId: "COMP-005",
+        competencyName: "AI & Machine Learning",
+        evidenceType: "Diagnostic Assessment",
+        title: "AI/ML Readiness Baseline Assessment",
+        score: 20,
+        details: "Evaluated decision tree classification, missing data imputation models, and NLP text mining.",
+        dateAssessed: "2026-08-31"
+      }
+    ]
   },
   {
     id: "COMP-006",
@@ -88,7 +193,20 @@ export const DEFAULT_COMPETENCIES: CompetencyItem[] = [
     targetLevel: 80,
     gap: 10,
     status: "STRONG",
-    lastAssessed: "2 weeks ago"
+    lastAssessed: "2 weeks ago",
+    confidenceScore: 95,
+    evidenceList: [
+      {
+        id: "EV-601",
+        competencyId: "COMP-006",
+        competencyName: "Official Statistics & Communication",
+        evidenceType: "Course Completion",
+        title: "UN Fundamental Principles of Official Statistics",
+        score: 72,
+        details: "Completed certified module on statistical ethics, public release standards, and respondent privacy.",
+        dateAssessed: "2026-08-10"
+      }
+    ]
   }
 ];
 

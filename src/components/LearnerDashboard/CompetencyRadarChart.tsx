@@ -1,18 +1,22 @@
 import React from 'react';
 import { CompetencyItem, CompetencyStatus } from '../../types/karmai';
-import { BarChart3, Target, Sparkles } from 'lucide-react';
+import { BarChart3, Target, Sparkles, FileText, ChevronRight } from 'lucide-react';
 
 interface CompetencyRadarChartProps {
   competencies: CompetencyItem[];
+  onSelectCompetencyForEvidence?: (competency: CompetencyItem) => void;
 }
 
-export const CompetencyRadarChart: React.FC<CompetencyRadarChartProps> = ({ competencies }) => {
+export const CompetencyRadarChart: React.FC<CompetencyRadarChartProps> = ({ 
+  competencies,
+  onSelectCompetencyForEvidence 
+}) => {
   const getStatusBadge = (status: CompetencyStatus) => {
     switch (status) {
       case 'STRONG':
-        return { label: '🟢 Strong', bg: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+        return { label: '🟢 Strong', bg: 'bg-emerald-50 text-[#166534] border-[#a7f3d0]' };
       case 'MODERATE':
-        return { label: '🟡 Moderate', bg: 'bg-blue-50 text-blue-800 border-blue-200' };
+        return { label: '🟢 Moderate', bg: 'bg-emerald-50 text-[#166534] border-[#a7f3d0]' };
       case 'NEEDS_IMPROVEMENT':
         return { label: '🟠 Needs Improvement', bg: 'bg-amber-50 text-amber-900 border-amber-200' };
       case 'CRITICAL':
@@ -22,19 +26,19 @@ export const CompetencyRadarChart: React.FC<CompetencyRadarChartProps> = ({ comp
   };
 
   return (
-    <div className="card-panel rounded-xl p-6 bg-white border border-slate-200 shadow-sm space-y-6">
+    <div className="card-panel rounded-3xl p-6 sm:p-8 bg-white border border-slate-200 shadow-xs space-y-6">
       
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-blue-700" />
-            <span>7. My AI Competency Profile & Radar Analysis</span>
+          <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-[#047857]" />
+            <span>My Competency Profile & Domain Scores</span>
           </h3>
-          <p className="text-xs text-slate-600 font-medium mt-0.5">
-            Real-time proficiency scores mapped against benchmark expectations for your designation.
+          <p className="text-xs text-slate-600 font-medium mt-1">
+            Real-time proficiency scores mapped against benchmark expectations for your role. Click any score to view its verified evidence trail.
           </p>
         </div>
-        <span className="px-3 py-1 rounded text-xs font-bold bg-blue-50 text-blue-900 border border-blue-200">
+        <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#ecfdf5] text-[#166534] border border-[#a7f3d0]">
           6 Core Framework Domains
         </span>
       </div>
@@ -44,10 +48,17 @@ export const CompetencyRadarChart: React.FC<CompetencyRadarChartProps> = ({ comp
         {competencies.map((comp) => {
           const badge = getStatusBadge(comp.status);
           return (
-            <div key={comp.id} className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
+            <div 
+              key={comp.id} 
+              onClick={() => onSelectCompetencyForEvidence && onSelectCompetencyForEvidence(comp)}
+              className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 cursor-pointer hover:border-[#047857]/50 hover:shadow-xs transition"
+            >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold text-slate-900">{comp.name}</span>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${badge.bg}`}>
+                <span className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
+                  <span>{comp.name}</span>
+                  <FileText className="h-3.5 w-3.5 text-[#047857] opacity-60" />
+                </span>
+                <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold border ${badge.bg}`}>
                   {badge.label}
                 </span>
               </div>
@@ -55,7 +66,7 @@ export const CompetencyRadarChart: React.FC<CompetencyRadarChartProps> = ({ comp
               {/* Progress Bar */}
               <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden flex">
                 <div 
-                  className="bg-blue-700 h-full text-[9px] font-bold text-white flex items-center justify-center"
+                  className="bg-[#047857] h-full text-[9px] font-bold text-white flex items-center justify-center"
                   style={{ width: `${comp.currentLevel}%` }}
                 >
                   {comp.currentLevel}%
@@ -69,7 +80,10 @@ export const CompetencyRadarChart: React.FC<CompetencyRadarChartProps> = ({ comp
               <div className="flex items-center justify-between text-[11px] text-slate-600 font-semibold pt-1">
                 <span>Current: <strong>{comp.currentLevel}%</strong></span>
                 <span>Target: <strong>{comp.targetLevel}%</strong></span>
-                <span className="text-amber-800 font-bold">Gap: {comp.gap}%</span>
+                <span className="text-[#047857] font-extrabold hover:underline flex items-center gap-0.5">
+                  <span>View Evidence</span>
+                  <ChevronRight className="h-3 w-3" />
+                </span>
               </div>
             </div>
           );
@@ -80,29 +94,34 @@ export const CompetencyRadarChart: React.FC<CompetencyRadarChartProps> = ({ comp
       <div className="overflow-x-auto pt-2">
         <table className="w-full text-left text-xs">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-100 text-slate-700 font-bold">
-              <th className="py-2.5 px-3">Competency</th>
-              <th className="py-2.5 px-3 text-center">Category</th>
-              <th className="py-2.5 px-3 text-right">Current</th>
-              <th className="py-2.5 px-3 text-right">Target</th>
-              <th className="py-2.5 px-3 text-right">Gap</th>
-              <th className="py-2.5 px-3 text-center">Status</th>
+            <tr className="border-b border-slate-200 bg-slate-100 text-slate-700 font-extrabold">
+              <th className="py-3 px-3">Competency</th>
+              <th className="py-3 px-3 text-center">Category</th>
+              <th className="py-3 px-3 text-right">Current</th>
+              <th className="py-3 px-3 text-right">Target</th>
+              <th className="py-3 px-3 text-right">Gap</th>
+              <th className="py-3 px-3 text-center">Evidence Audit</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 font-medium">
             {competencies.map((comp) => {
               const badge = getStatusBadge(comp.status);
               return (
-                <tr key={comp.id} className="hover:bg-slate-50">
-                  <td className="py-2.5 px-3 font-bold text-slate-900">{comp.name}</td>
-                  <td className="py-2.5 px-3 text-center text-slate-600 font-semibold">{comp.category}</td>
-                  <td className="py-2.5 px-3 text-right font-bold text-blue-800">{comp.currentLevel}%</td>
-                  <td className="py-2.5 px-3 text-right font-bold text-slate-700">{comp.targetLevel}%</td>
-                  <td className="py-2.5 px-3 text-right font-bold text-amber-800">{comp.gap}%</td>
-                  <td className="py-2.5 px-3 text-center">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${badge.bg}`}>
-                      {badge.label}
-                    </span>
+                <tr 
+                  key={comp.id} 
+                  onClick={() => onSelectCompetencyForEvidence && onSelectCompetencyForEvidence(comp)}
+                  className="hover:bg-emerald-50/40 cursor-pointer transition"
+                >
+                  <td className="py-3 px-3 font-bold text-slate-900">{comp.name}</td>
+                  <td className="py-3 px-3 text-center text-slate-600 font-semibold">{comp.category}</td>
+                  <td className="py-3 px-3 text-right font-extrabold text-[#047857]">{comp.currentLevel}%</td>
+                  <td className="py-3 px-3 text-right font-bold text-slate-700">{comp.targetLevel}%</td>
+                  <td className="py-3 px-3 text-right font-bold text-amber-800">{comp.gap}%</td>
+                  <td className="py-3 px-3 text-center">
+                    <button className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-[#ecfdf5] text-[#047857] border border-slate-200 text-[11px] font-extrabold transition flex items-center gap-1 mx-auto">
+                      <FileText className="h-3 w-3" />
+                      <span>Evidence</span>
+                    </button>
                   </td>
                 </tr>
               );

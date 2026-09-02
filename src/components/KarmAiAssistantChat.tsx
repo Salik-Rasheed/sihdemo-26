@@ -14,7 +14,7 @@ export const KarmAiAssistantChat: React.FC<KarmAiAssistantChatProps> = ({ isOpen
     {
       id: "MSG-INIT",
       sender: "KARM_AI",
-      text: "Namaste Karmayogi! 👋 Welcome to KarmAI AI Assistant.\n\nAsk me anything — greetings, website navigation, ideas for developing your skills, or any question you have!",
+      text: "Namaste! 👋 Welcome to Karm AI Assistant.\n\nAsk me anything — greetings, portal navigation, ideas for developing your skills, or any question you have!",
       timestamp: "Just now",
       suggestedActions: [
         { label: "💡 Ideas to develop my skills", action: "skill-ideas" },
@@ -75,9 +75,6 @@ export const KarmAiAssistantChat: React.FC<KarmAiAssistantChatProps> = ({ isOpen
     } else if (action === 'plan' || action === 'learning-path') {
       onNavigateToTab('learning-path');
       onClose();
-    } else if (action === 'sih-demo') {
-      onNavigateToTab('sih-demo');
-      onClose();
     } else if (action === 'competency-profile') {
       onNavigateToTab('competency-profile');
       onClose();
@@ -133,7 +130,7 @@ export const KarmAiAssistantChat: React.FC<KarmAiAssistantChatProps> = ({ isOpen
             </div>
             <div>
               <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
-                <span>KarmAI Assistant</span>
+                <span>Karm AI Assistant</span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-900 text-purple-200 border border-purple-700 font-bold">
                   AI Active
                 </span>
@@ -161,7 +158,7 @@ export const KarmAiAssistantChat: React.FC<KarmAiAssistantChatProps> = ({ isOpen
               <div
                 className={`p-3.5 rounded-2xl max-w-[88%] leading-relaxed shadow-sm ${
                   m.sender === 'USER'
-                    ? 'bg-blue-700 text-white font-medium rounded-br-xs'
+                    ? 'bg-[#047857] text-white font-medium rounded-br-xs'
                     : 'bg-white text-slate-900 font-normal border border-slate-200 rounded-bl-xs'
                 }`}
               >
@@ -195,7 +192,7 @@ export const KarmAiAssistantChat: React.FC<KarmAiAssistantChatProps> = ({ isOpen
           {isTyping && (
             <div className="flex items-center space-x-2 p-3 rounded-2xl bg-white border border-slate-200 text-slate-500 text-xs w-max rounded-bl-xs">
               <Sparkles className="h-3.5 w-3.5 text-purple-600 animate-spin" />
-              <span className="font-semibold text-slate-600">KarmAI is thinking...</span>
+              <span className="font-semibold text-slate-600">Karm AI is thinking...</span>
             </div>
           )}
 
@@ -209,15 +206,15 @@ export const KarmAiAssistantChat: React.FC<KarmAiAssistantChatProps> = ({ isOpen
             value={inputPrompt}
             onChange={(e) => setInputPrompt(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Ask KarmAI about your skill gaps, courses, or quizzes..."
+            placeholder="Ask Karm AI about your skill gaps, courses, or quizzes..."
             className="flex-grow bg-slate-100 border border-slate-300 focus:border-purple-500 focus:bg-white rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-900 outline-none transition"
           />
           <button
             onClick={() => handleSend()}
             disabled={!inputPrompt.trim() || isTyping}
-            className="p-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 disabled:opacity-40 text-white font-bold transition border border-blue-800 flex items-center justify-center"
+            className="p-2.5 rounded-xl bg-[#047857] hover:bg-[#065f46] disabled:opacity-40 text-white font-bold transition border border-[#047857] flex items-center justify-center"
           >
-            <Send className="h-4 w-4 text-amber-300" />
+            <Send className="h-4 w-4 text-white" />
           </button>
         </div>
 

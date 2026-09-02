@@ -26,7 +26,7 @@ const MOCK_COURSES: IGotCourse[] = [
       "Calculate design effects and weights for complex survey data"
     ],
     provider: "National Statistical Systems Training Academy (NSSTA)",
-    deepLinkUrl: "https://igotkarmayogi.gov.in/course/igot-demo-001",
+    deepLinkUrl: "https://igotkarmayogi.gov.in/",
     courseType: "Self-Paced",
     roleTarget: ["Statistical Officer", "Senior Field Investigator", "Research Analyst"],
     recommendationReason: "Recommended because your Survey Methodology competency is currently 43%, while your role requires a target level of 80%.",

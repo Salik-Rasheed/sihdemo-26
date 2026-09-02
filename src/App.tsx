@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
+import { MobileBottomNav } from './components/MobileBottomNav';
+import { FloatingAiChatbotFab } from './components/FloatingAiChatbotFab';
+import { RoleGuardModal } from './components/RoleGuardModal';
 import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { OnboardingWizard } from './components/OnboardingWizard';
@@ -16,8 +19,6 @@ import { AdminDashboard } from './components/Admin/AdminDashboard';
 import { OrganizationSkillHeatmap } from './components/Admin/OrganizationSkillHeatmap';
 import { SysAdminSettings } from './components/SysAdmin/SysAdminSettings';
 import { KarmAiAssistantChat } from './components/KarmAiAssistantChat';
-import { SihDemoModeModal } from './components/SihDemoModeModal';
-import { ClosedLoopJudgeDemo } from './components/ClosedLoopJudgeDemo';
 import { CourseDetailModal } from './components/CourseDetailModal';
 
 import { karmaAiService, MOCK_GENERATED_MCQS } from './services/karmaiService';
@@ -36,10 +37,17 @@ import {
 } from './types/karmai';
 
 export function App() {
-  const [viewState, setViewState] = useState<'LANDING' | 'LOGIN' | 'ONBOARDING' | 'APP'>('APP');
+  // Navigation & Role State
+  const [viewState, setViewState] = useState<'LANDING' | 'LOGIN' | 'ONBOARDING' | 'APP'>('LANDING');
   const [currentRole, setCurrentRole] = useState<UserRole>('LEARNER');
   const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [loginPresetRole, setLoginPresetRole] = useState<UserRole>('LEARNER');
 
+  // Role Guard Modal State
+  const [roleGuardTargetRole, setRoleGuardTargetRole] = useState<UserRole | null>(null);
+  const [isRoleGuardOpen, setIsRoleGuardOpen] = useState<boolean>(false);
+
+  // User Profile Data
   const [userProfile, setUserProfile] = useState<UserProfile>(karmaAiService.getUserProfile());
   const [competencies, setCompetencies] = useState<CompetencyItem[]>(karmaAiService.getCompetencies());
   const [priorityGaps, setPriorityGaps] = useState<PriorityGapItem[]>(karmaAiService.getPriorityGaps());
@@ -82,7 +90,6 @@ export function App() {
   // Modals & Chat Assistant State
   const [selectedCourseForModal, setSelectedCourseForModal] = useState<IGotCourse | null>(null);
   const [isChatAssistantOpen, setIsChatAssistantOpen] = useState<boolean>(false);
-  const [isSihDemoModalOpen, setIsSihDemoModalOpen] = useState<boolean>(false);
 
   // Load iGOT initial datasets
   useEffect(() => {
@@ -99,13 +106,27 @@ export function App() {
     });
   }, []);
 
-  // Handle Role Switch
-  const handleChangeRole = (newRole: UserRole) => {
-    setCurrentRole(newRole);
-    karmaAiService.updateUserRole(newRole);
-    if (newRole === 'TRAINING_ADMIN') setActiveTab('admin-dashboard');
-    else if (newRole === 'SYSTEM_ADMIN') setActiveTab('sys-settings');
-    else setActiveTab('dashboard');
+  // Role Switching Request (Enforces Dashboard Isolation Guard)
+  const handleRoleChangeRequest = (requestedRole: UserRole) => {
+    if (requestedRole === currentRole) return;
+    setRoleGuardTargetRole(requestedRole);
+    setIsRoleGuardOpen(true);
+  };
+
+  // Perform Role Switch after authentication
+  const executeLoginForRole = (authenticatedRole: UserRole) => {
+    setCurrentRole(authenticatedRole);
+    karmaAiService.updateUserRole(authenticatedRole);
+
+    if (authenticatedRole === 'TRAINER') {
+      setActiveTab('material-studio');
+    } else if (authenticatedRole === 'DEPARTMENT_ADMIN' || (authenticatedRole as string) === 'TRAINING_ADMIN') {
+      setActiveTab('admin-dashboard');
+    } else if (authenticatedRole === 'SYSTEM_ADMIN') {
+      setActiveTab('sys-settings');
+    } else {
+      setActiveTab('dashboard');
+    }
   };
 
   // Sync Data
@@ -123,57 +144,56 @@ export function App() {
     setQuizResult(result);
     setQuizState('RESULT');
 
-    // Execute Competency Bump: 43% -> 68%
     karmaAiService.updateCompetencyScore('Survey Methodology', 68);
     setCompetencies([...karmaAiService.getCompetencies()]);
     setPriorityGaps([...karmaAiService.getPriorityGaps()]);
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white font-sans">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col selection:bg-[#047857] selection:text-white font-sans">
       
-      {/* Sticky Header Navbar */}
-      <Navbar
-        activeTab={activeTab}
-        setActiveTab={(tab) => {
-          setActiveTab(tab);
-          if (tab === 'sih-demo') {
-            setIsSihDemoModalOpen(true);
-          }
-        }}
-        currentRole={currentRole}
-        onChangeRole={handleChangeRole}
-        onLaunchJudgeDemo={() => {
-          setActiveTab('sih-demo');
-          setIsSihDemoModalOpen(true);
-        }}
-        onToggleChatAssistant={() => setIsChatAssistantOpen(true)}
-        onLogout={() => setViewState('LOGIN')}
-      />
+      {/* Sticky Top Header Navbar (Shown when in APP view state) */}
+      {viewState === 'APP' && (
+        <Navbar
+          activeTab={activeTab}
+          setActiveTab={(tab) => setActiveTab(tab)}
+          currentRole={currentRole}
+          onChangeRoleRequest={handleRoleChangeRequest}
+          onToggleChatAssistant={() => setIsChatAssistantOpen(true)}
+          onLogout={() => {
+            setViewState('LOGIN');
+          }}
+          userName={userProfile.name}
+          userDesignation={userProfile.designation}
+        />
+      )}
 
-      {/* Main Content View Switcher */}
-      <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* Main Content Area */}
+      <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         
+        {/* LANDING PAGE VIEW */}
         {viewState === 'LANDING' && (
           <LandingPage
-            onGetStarted={() => setViewState('ONBOARDING')}
-            onLaunchDemo={() => setIsSihDemoModalOpen(true)}
+            onGoToLogin={(presetRole) => {
+              if (presetRole) setLoginPresetRole(presetRole);
+              setViewState('LOGIN');
+            }}
           />
         )}
 
+        {/* LOGIN PAGE VIEW */}
         {viewState === 'LOGIN' && (
           <LoginPage
+            initialRole={loginPresetRole}
+            onBackToPortal={() => setViewState('LANDING')}
             onLoginSuccess={(role) => {
-              handleChangeRole(role);
+              executeLoginForRole(role);
               setViewState('APP');
-            }}
-            onLaunchJudgeDemo={() => {
-              setViewState('APP');
-              setIsSihDemoModalOpen(true);
             }}
           />
         )}
 
+        {/* ONBOARDING WIZARD VIEW */}
         {viewState === 'ONBOARDING' && (
           <OnboardingWizard
             initialProfile={userProfile}
@@ -186,6 +206,7 @@ export function App() {
           />
         )}
 
+        {/* APPLICATION DASHBOARD VIEWS */}
         {viewState === 'APP' && (
           <>
             {/* LEARNER VIEWS */}
@@ -272,7 +293,7 @@ export function App() {
               </div>
             )}
 
-            {/* TRAINING ADMIN VIEWS */}
+            {/* TRAINING & DEPT ADMIN VIEWS */}
             {activeTab === 'admin-dashboard' && <AdminDashboard />}
             {activeTab === 'org-heatmap' && <OrganizationSkillHeatmap />}
             {activeTab === 'training-effectiveness' && <AdminDashboard />}
@@ -282,29 +303,51 @@ export function App() {
             {activeTab === 'sys-settings' && <SysAdminSettings />}
             {activeTab === 'sys-framework' && <SysAdminSettings />}
             {activeTab === 'sys-integrations' && <SysAdminSettings />}
-
-            {/* SIH JUDGE DEMO VIEW */}
-            {activeTab === 'sih-demo' && (
-              <ClosedLoopJudgeDemo onCompleteDemo={() => setActiveTab('dashboard')} />
-            )}
           </>
         )}
 
       </main>
 
+      {/* Floating AI Chatbot FAB (Meta AI / WhatsApp Style in Bottom Right) */}
+      <FloatingAiChatbotFab
+        isOpen={isChatAssistantOpen}
+        onOpenChat={() => setIsChatAssistantOpen(true)}
+      />
+
+      {/* Mobile Bottom Navigation Bar */}
+      {viewState === 'APP' && (
+        <MobileBottomNav
+          activeTab={activeTab}
+          setActiveTab={(tab) => setActiveTab(tab)}
+        />
+      )}
+
+      {/* Role Guard Modal (Prevents cross-dashboard navigation without proper login) */}
+      <RoleGuardModal
+        isOpen={isRoleGuardOpen}
+        currentRole={currentRole}
+        targetRole={roleGuardTargetRole || 'LEARNER'}
+        onClose={() => setIsRoleGuardOpen(false)}
+        onGoToLogin={(roleToAuthenticate) => {
+          setIsRoleGuardOpen(false);
+          setLoginPresetRole(roleToAuthenticate);
+          setViewState('LOGIN');
+        }}
+      />
+
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-600 font-medium">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <strong className="text-slate-900">KarmAI</strong> — AI-Powered Competency & Learning Intelligence Platform
+            <strong className="text-slate-900">Karm AI Portal</strong> — Government Employee Learning & Development Platform
           </div>
           <div>
-            Ministry of Statistics & Programme Implementation (MoSPI) • SIH 2026
+            Ministry of Statistics & Programme Implementation • Official Platform
           </div>
         </div>
       </footer>
 
-      {/* Course Detail Modal */}
+      {/* Modals */}
       <CourseDetailModal
         course={selectedCourseForModal as any}
         onClose={() => setSelectedCourseForModal(null)}
@@ -314,17 +357,9 @@ export function App() {
         }}
       />
 
-      {/* KarmAI Assistant Chatbot Modal */}
       <KarmAiAssistantChat
         isOpen={isChatAssistantOpen}
         onClose={() => setIsChatAssistantOpen(false)}
-        onNavigateToTab={(tab) => setActiveTab(tab)}
-      />
-
-      {/* SIH 13-Step Guided Walkthrough Modal */}
-      <SihDemoModeModal
-        isOpen={isSihDemoModalOpen}
-        onClose={() => setIsSihDemoModalOpen(false)}
         onNavigateToTab={(tab) => setActiveTab(tab)}
       />
 

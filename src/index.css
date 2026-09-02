@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-slate-100 text-slate-900 font-sans antialiased selection:bg-blue-600 selection:text-white;
+    @apply bg-[#f8fafc] text-slate-900 font-sans antialiased selection:bg-[#047857] selection:text-white;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
@@ -22,6 +22,39 @@
 .card-panel-hover:hover {
   border-color: #cbd5e1;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+}
+
+/* Animations for Welcome to Karm AI & Page Transitions */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes welcomeGlow {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-welcome-text {
+  background: linear-gradient(135deg, #047857 0%, #065f46 40%, #1e3a8a 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: welcomeGlow 6s ease infinite;
 }
 
 /* Custom Light Scrollbar */

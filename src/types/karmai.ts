@@ -1,4 +1,4 @@
-export type UserRole = 'LEARNER' | 'TRAINING_ADMIN' | 'SYSTEM_ADMIN';
+export type UserRole = 'LEARNER' | 'TRAINER' | 'DEPARTMENT_ADMIN' | 'SYSTEM_ADMIN';
 
 export type IntegrationMode = 'PROTOTYPE_DEMO' | 'API_READY' | 'LIVE_AUTHORIZED';
 
@@ -18,6 +18,17 @@ export interface UserProfile {
 
 export type CompetencyStatus = 'STRONG' | 'MODERATE' | 'NEEDS_IMPROVEMENT' | 'CRITICAL';
 
+export interface EvidenceItem {
+  id: string;
+  competencyId: string;
+  competencyName: string;
+  evidenceType: 'Diagnostic Assessment' | 'Quiz Performance' | 'Practical Task' | 'Course Completion';
+  title: string;
+  score: number;
+  details: string;
+  dateAssessed: string;
+}
+
 export interface CompetencyItem {
   id: string;
   name: string;
@@ -27,6 +38,8 @@ export interface CompetencyItem {
   gap: number; // targetLevel - currentLevel
   status: CompetencyStatus;
   lastAssessed: string;
+  confidenceScore?: number;
+  evidenceList?: EvidenceItem[];
 }
 
 export interface PriorityGapItem {
@@ -40,6 +53,7 @@ export interface PriorityGapItem {
   expectedImprovement: string;
   aiExplanation: string;
   priorityReason: string;
+  whyRecommended?: string;
 }
 
 export interface LearningPathWeek {
@@ -53,6 +67,8 @@ export interface LearningPathWeek {
   duration: string;
   whyRecommended: string;
   completed: boolean;
+  source?: string;
+  difficulty?: string;
 }
 
 export interface IGotCourse {
@@ -63,7 +79,7 @@ export interface IGotCourse {
   duration: string;
   language: string;
   matchScore: number;
-  source: 'iGOT Karmayogi' | 'iGOT Integration Demo' | 'NSSTA Institutional';
+  source: 'iGOT Karmayogi' | 'Prototype iGOT Resource Mapping' | 'NSSTA Institutional';
   description: string;
   learningObjectives: string[];
   provider: string;
@@ -108,6 +124,7 @@ export interface McqQuestion {
   explanation: string;
   sourceDocument: string;
   sourcePage: number;
+  sourceSection?: string;
   competency: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
   confidenceScore: number; // e.g. 94%
@@ -142,6 +159,27 @@ export interface HeatmapCell {
   status: CompetencyStatus;
 }
 
+export interface DeptIntervention {
+  id: string;
+  department: string;
+  topSkillGaps: string[];
+  affectedLearnerCount: number;
+  suggestedTraining: string;
+  priority: 'Critical' | 'High' | 'Medium';
+  aiSummary: string;
+}
+
+export interface FutureSkillItem {
+  id: string;
+  skillName: string;
+  category: string;
+  currentReadiness: number;
+  targetReadiness: number;
+  gap: number;
+  reason: string;
+  targetRoles: string[];
+}
+
 export interface ChatMessage {
   id: string;
   sender: 'USER' | 'KARM_AI';
@@ -159,3 +197,4 @@ export interface SyncLogItem {
   status: 'Success' | 'Partial Failure' | 'Failed';
   details: string;
 }
+

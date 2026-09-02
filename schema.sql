@@ -1,8 +1,6 @@
--- Refer to supabase/schema.sql for the complete SQL schema.
--- Copying content from supabase/schema.sql
 -- ============================================================================
--- StatSkill AI + iGOT Karmayogi Integration - Supabase Database Schema
--- Project: SIH 2026 Demo / Ministry of Statistics and Programme Implementation (MoSPI)
+-- StatSkill AI + iGOT Karmayogi Integration — Supabase Database Schema
+-- Project: SIH 2026 / Ministry of Statistics & Programme Implementation (MoSPI)
 -- ============================================================================
 
 -- Enable required extensions
@@ -14,7 +12,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ============================================================================
 
 DO $$ BEGIN
-    CREATE TYPE user_role AS ENUM ('LEARNER', 'TRAINING_ADMIN', 'SYSTEM_ADMIN');
+    CREATE TYPE user_role AS ENUM ('LEARNER', 'TRAINER', 'DEPARTMENT_ADMIN', 'SYSTEM_ADMIN');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
@@ -73,8 +71,14 @@ EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
+DO $$ BEGIN
+    CREATE TYPE evidence_type AS ENUM ('Diagnostic Assessment', 'Quiz Performance', 'Practical Task', 'Course Completion');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
 -- ============================================================================
--- 2. TABLES
+-- 2. TABLES DEFINITIONS
 -- ============================================================================
 
 -- PROFILES (Links with Supabase auth.users)
@@ -84,12 +88,12 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     employee_id TEXT UNIQUE NOT NULL,
     department TEXT NOT NULL DEFAULT 'National Sample Survey Office (NSSO)',
     designation TEXT NOT NULL DEFAULT 'Statistical Officer',
-    organization TEXT NOT NULL DEFAULT 'MoSPI',
-    years_of_experience INT NOT NULL DEFAULT 5,
+    organization TEXT NOT NULL DEFAULT 'Ministry of Statistics & Programme Implementation',
+    years_of_experience INT NOT NULL DEFAULT 6,
     role user_role NOT NULL DEFAULT 'LEARNER',
     avatar_url TEXT,
-    learning_goal TEXT DEFAULT 'Master Big Data Analytics and National Accounts estimation techniques for official statistics.',
-    existing_skills TEXT[] DEFAULT ARRAY['Survey Sampling', 'Excel', 'Basic R', 'Data Processing'],
+    learning_goal TEXT DEFAULT 'Master Survey Methodology, Python automation, and AI/ML for socio-economic survey rounds.',
+    existingSkills TEXT[] DEFAULT ARRAY['Survey Sampling', 'Data Collection', 'Excel', 'Basic R'],
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -103,16 +107,52 @@ CREATE TABLE IF NOT EXISTS public.competencies (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- USER COMPETENCIES (Skill Assessments)
+-- ROLE COMPETENCY BENCHMARKS
+CREATE TABLE IF NOT EXISTS public.role_competencies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    role_title TEXT NOT NULL,
+    competency_id UUID NOT NULL REFERENCES public.competencies(id) ON DELETE CASCADE,
+    target_level NUMERIC(5, 2) NOT NULL DEFAULT 80.00 CHECK (target_level >= 0 AND target_level <= 100),
+    CONSTRAINT role_comp_unique UNIQUE (role_title, competency_id)
+);
+
+-- USER COMPETENCIES (Live Officer Profiling)
 CREATE TABLE IF NOT EXISTS public.user_competencies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     competency_id UUID NOT NULL REFERENCES public.competencies(id) ON DELETE CASCADE,
     current_level NUMERIC(5, 2) NOT NULL DEFAULT 50.00 CHECK (current_level >= 0 AND current_level <= 100),
-    target_level NUMERIC(5, 2) NOT NULL DEFAULT 85.00 CHECK (target_level >= 0 AND target_level <= 100),
+    target_level NUMERIC(5, 2) NOT NULL DEFAULT 80.00 CHECK (target_level >= 0 AND target_level <= 100),
+    gap NUMERIC(5, 2) GENERATED ALWAYS AS (GREATEST(0, target_level - current_level)) STORED,
     status competency_status NOT NULL DEFAULT 'MODERATE',
+    confidence_score NUMERIC(5, 2) NOT NULL DEFAULT 92.00,
     last_assessed TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT user_competency_unique UNIQUE (user_id, competency_id)
+);
+
+-- EVIDENCE LEDGER (Proof of Competency Level)
+CREATE TABLE IF NOT EXISTS public.evidence (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    competency_id UUID NOT NULL REFERENCES public.competencies(id) ON DELETE CASCADE,
+    evidence_type evidence_type NOT NULL DEFAULT 'Diagnostic Assessment',
+    title TEXT NOT NULL,
+    score NUMERIC(5, 2) NOT NULL,
+    details TEXT,
+    date_assessed TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- SKILL GAPS & PRIORITY
+CREATE TABLE IF NOT EXISTS public.skill_gaps (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    competency_id UUID NOT NULL REFERENCES public.competencies(id) ON DELETE CASCADE,
+    gap NUMERIC(5, 2) NOT NULL,
+    priority TEXT NOT NULL CHECK (priority IN ('Critical', 'High', 'Medium', 'Low')),
+    recommended_hours INT NOT NULL DEFAULT 8,
+    priority_reason TEXT,
+    ai_explanation TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- iGOT KARMAYOGI COURSES CATALOG
@@ -125,20 +165,20 @@ CREATE TABLE IF NOT EXISTS public.igot_courses (
     duration TEXT NOT NULL DEFAULT '4 hours',
     language TEXT NOT NULL DEFAULT 'English',
     match_score NUMERIC(5, 2) NOT NULL DEFAULT 85.00,
-    source TEXT NOT NULL DEFAULT 'iGOT Karmayogi',
+    source TEXT NOT NULL DEFAULT 'Prototype iGOT Resource Mapping',
     description TEXT,
     learning_objectives TEXT[] DEFAULT ARRAY[]::TEXT[],
     provider TEXT NOT NULL DEFAULT 'National Statistical Systems Training Academy (NSSTA)',
     deep_link_url TEXT,
     course_type course_type NOT NULL DEFAULT 'Self-Paced',
-    role_target TEXT[] DEFAULT ARRAY['Statistical Officer', 'Director', 'Data Analyst'],
+    role_target TEXT[] DEFAULT ARRAY['Statistical Officer', 'Economic Officer', 'Data Analyst'],
     recommendation_reason TEXT,
     enrolled_count INT NOT NULL DEFAULT 120,
     rating NUMERIC(3, 2) NOT NULL DEFAULT 4.70,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- COMPETENCY MAPPING RECORDS (StatSkill <-> iGOT Taxonomy)
+-- COMPETENCY MAPPING RECORDS (StatSkill AI <-> iGOT Taxonomy)
 CREATE TABLE IF NOT EXISTS public.competency_mappings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     stat_skill_competency TEXT NOT NULL,
@@ -166,7 +206,7 @@ CREATE TABLE IF NOT EXISTS public.user_learning_paths (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- DOCUMENT UPLOADS (RAG Curriculum Documents)
+-- DOCUMENT UPLOADS (RAG Curriculum Documents for Trainer Studio)
 CREATE TABLE IF NOT EXISTS public.document_uploads (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -183,7 +223,7 @@ CREATE TABLE IF NOT EXISTS public.document_uploads (
     status document_status NOT NULL DEFAULT 'PROCESSING'
 );
 
--- MCQ QUESTIONS (AI Generated & Evaluated)
+-- MCQ QUESTIONS (AI Generated Grounded Questions with Trainer Editing)
 CREATE TABLE IF NOT EXISTS public.mcq_questions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     document_id UUID REFERENCES public.document_uploads(id) ON DELETE CASCADE,
@@ -193,6 +233,7 @@ CREATE TABLE IF NOT EXISTS public.mcq_questions (
     explanation TEXT,
     source_document TEXT,
     source_page INT DEFAULT 1,
+    source_section TEXT,
     competency TEXT NOT NULL,
     difficulty TEXT NOT NULL DEFAULT 'Medium' CHECK (difficulty IN ('Easy', 'Medium', 'Hard')),
     confidence_score NUMERIC(5, 2) NOT NULL DEFAULT 92.00,
@@ -215,6 +256,30 @@ CREATE TABLE IF NOT EXISTS public.quiz_results (
     breakdown JSONB DEFAULT '[]'::JSONB,
     ai_next_recommendation TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- DEPARTMENT INTERVENTIONS (Decision Support for Department Admins)
+CREATE TABLE IF NOT EXISTS public.department_interventions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    department TEXT NOT NULL,
+    top_skill_gaps TEXT[] DEFAULT ARRAY[]::TEXT[],
+    affected_learner_count INT NOT NULL DEFAULT 0,
+    suggested_training TEXT NOT NULL,
+    priority TEXT NOT NULL CHECK (priority IN ('Critical', 'High', 'Medium')),
+    ai_summary TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- FUTURE SKILL READINESS
+CREATE TABLE IF NOT EXISTS public.future_skills (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    skill_name TEXT NOT NULL UNIQUE,
+    category TEXT NOT NULL,
+    current_readiness NUMERIC(5, 2) NOT NULL DEFAULT 30.00,
+    target_readiness NUMERIC(5, 2) NOT NULL DEFAULT 75.00,
+    gap NUMERIC(5, 2) GENERATED ALWAYS AS (GREATEST(0, target_readiness - current_readiness)) STORED,
+    reason TEXT NOT NULL,
+    target_roles TEXT[] DEFAULT ARRAY[]::TEXT[]
 );
 
 -- INTEGRATION & SYNC AUDIT LOGS
@@ -242,7 +307,7 @@ CREATE TABLE IF NOT EXISTS public.integration_settings (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- KARM-AI CHAT MESSAGES
+-- CHAT MESSAGES (KarmAI Assistant)
 CREATE TABLE IF NOT EXISTS public.chat_messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -253,11 +318,13 @@ CREATE TABLE IF NOT EXISTS public.chat_messages (
 );
 
 -- ============================================================================
--- 3. INDEXES FOR PERFORMANCE
+-- 3. INDEXES FOR HIGH PERFORMANCE
 -- ============================================================================
 
 CREATE INDEX IF NOT EXISTS idx_user_competencies_user ON public.user_competencies(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_competencies_comp ON public.user_competencies(competency_id);
+CREATE INDEX IF NOT EXISTS idx_evidence_user ON public.evidence(user_id);
+CREATE INDEX IF NOT EXISTS idx_evidence_comp ON public.evidence(competency_id);
 CREATE INDEX IF NOT EXISTS idx_igot_courses_competency ON public.igot_courses(competency);
 CREATE INDEX IF NOT EXISTS idx_learning_paths_user ON public.user_learning_paths(user_id);
 CREATE INDEX IF NOT EXISTS idx_mcq_questions_doc ON public.mcq_questions(document_id);
@@ -300,9 +367,9 @@ BEGIN
     VALUES (
         NEW.id,
         COALESCE(NEW.raw_user_meta_data->>'name', NEW.email, 'Statistical Officer'),
-        COALESCE(NEW.raw_user_meta_data->>'employee_id', 'EMP-' || SUBSTRING(NEW.id::text FROM 1 FOR 8)),
+        COALESCE(NEW.raw_user_meta_data->>'employee_id', 'MoSPI-' || SUBSTRING(NEW.id::text FROM 1 FOR 6)),
         COALESCE(NEW.raw_user_meta_data->>'department', 'National Sample Survey Office (NSSO)'),
-        COALESCE(NEW.raw_user_meta_data->>'designation', 'Senior Statistical Officer'),
+        COALESCE(NEW.raw_user_meta_data->>'designation', 'Statistical Officer'),
         'LEARNER'
     )
     ON CONFLICT (id) DO NOTHING;
@@ -320,13 +387,17 @@ CREATE TRIGGER on_auth_user_created
 -- ============================================================================
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.competencies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_competencies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.evidence ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.igot_courses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.competency_mappings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_learning_paths ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.document_uploads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mcq_questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.quiz_results ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.department_interventions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.future_skills ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sync_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.integration_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
@@ -334,12 +405,17 @@ ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own profile or admins can view all"
     ON public.profiles FOR SELECT
     USING (auth.uid() = id OR EXISTS (
-        SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('TRAINING_ADMIN', 'SYSTEM_ADMIN')
+        SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role::text IN ('TRAINER', 'DEPARTMENT_ADMIN', 'SYSTEM_ADMIN', 'TRAINING_ADMIN')
     ));
 
 CREATE POLICY "Users can update own profile"
     ON public.profiles FOR UPDATE
     USING (auth.uid() = id);
+
+CREATE POLICY "Anyone authenticated can view competencies"
+    ON public.competencies FOR SELECT
+    TO authenticated
+    USING (true);
 
 CREATE POLICY "Anyone authenticated can view iGOT courses"
     ON public.igot_courses FOR SELECT
@@ -349,13 +425,19 @@ CREATE POLICY "Anyone authenticated can view iGOT courses"
 CREATE POLICY "Admins can manage iGOT courses"
     ON public.igot_courses FOR ALL
     USING (EXISTS (
-        SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('TRAINING_ADMIN', 'SYSTEM_ADMIN')
+        SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role::text IN ('TRAINER', 'DEPARTMENT_ADMIN', 'SYSTEM_ADMIN', 'TRAINING_ADMIN')
     ));
 
 CREATE POLICY "Users can view and manage their own competencies"
     ON public.user_competencies FOR ALL
     USING (user_id = auth.uid() OR EXISTS (
-        SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('TRAINING_ADMIN', 'SYSTEM_ADMIN')
+        SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role::text IN ('TRAINER', 'DEPARTMENT_ADMIN', 'SYSTEM_ADMIN', 'TRAINING_ADMIN')
+    ));
+
+CREATE POLICY "Users can view their own evidence"
+    ON public.evidence FOR SELECT
+    USING (user_id = auth.uid() OR EXISTS (
+        SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role::text IN ('TRAINER', 'DEPARTMENT_ADMIN', 'SYSTEM_ADMIN', 'TRAINING_ADMIN')
     ));
 
 CREATE POLICY "Users can manage their own learning paths"
@@ -365,8 +447,18 @@ CREATE POLICY "Users can manage their own learning paths"
 CREATE POLICY "Users can manage their own quiz results"
     ON public.quiz_results FOR ALL
     USING (user_id = auth.uid() OR EXISTS (
-        SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('TRAINING_ADMIN', 'SYSTEM_ADMIN')
+        SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role::text IN ('TRAINER', 'DEPARTMENT_ADMIN', 'SYSTEM_ADMIN', 'TRAINING_ADMIN')
     ));
+
+CREATE POLICY "Anyone authenticated can read department interventions"
+    ON public.department_interventions FOR SELECT
+    TO authenticated
+    USING (true);
+
+CREATE POLICY "Anyone authenticated can read future skills"
+    ON public.future_skills FOR SELECT
+    TO authenticated
+    USING (true);
 
 CREATE POLICY "Users can manage their chat messages"
     ON public.chat_messages FOR ALL
@@ -377,37 +469,34 @@ CREATE POLICY "Anyone authenticated can read integration settings"
     TO authenticated
     USING (true);
 
-CREATE POLICY "Admins can update integration settings"
-    ON public.integration_settings FOR ALL
-    USING (EXISTS (
-        SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('TRAINING_ADMIN', 'SYSTEM_ADMIN')
-    ));
-
 -- ============================================================================
 -- 6. INITIAL SEED DATA
 -- ============================================================================
 
 INSERT INTO public.competencies (name, category, description) VALUES
-    ('National Accounts & GDP Computation', 'Statistical', 'Methods for calculating GDP, GVA, and macroeconomic aggregates per System of National Accounts (SNA 2008).'),
-    ('Advanced Sample Survey Design & Estimation', 'Statistical', 'Stratified sampling, cluster sampling, weighting, and variance estimation techniques.'),
-    ('Data Visualization & Analytics in R/Python', 'Technical', 'Exploratory data analysis, interactive dashboard creation, and automated reporting.'),
-    ('AI & Machine Learning in Official Statistics', 'Technical', 'Applying ML for anomaly detection, data imputation, and predictive modeling in census/surveys.'),
-    ('Time Series & Macroeconometric Forecasting', 'Statistical', 'ARIMA, VAR, state-space modeling, and seasonal adjustments for economic indicators.'),
-    ('Data Governance & Survey Privacy Standards', 'Digital', 'Compliance with PDPB, data anonymization, confidential compute, and safe data handling.')
+    ('Survey Methodology', 'Statistical', 'Methods for probability sampling, questionnaire validation, CAPI collection protocols, and response error control.'),
+    ('Python for Data Science', 'Technical', 'Exploratory data analysis, pandas microdata wrangling, and script automation for official statistics.'),
+    ('SQL & Data Engineering', 'Technical', 'Relational database querying, multi-table JOINs, window functions, and NIC registry data linkage.'),
+    ('Data Visualization & Dashboards', 'Digital', 'Building choropleth maps, district indicator dashboards, and executive data storytelling.'),
+    ('AI & Machine Learning', 'Technical', 'Applying Random Forest, XGBoost, and NLP for survey non-response imputation and anomaly detection.'),
+    ('Official Statistics & Communication', 'Managerial', 'Compliance with UN Fundamental Principles, data confidentiality, and statistical reporting.')
 ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO public.igot_courses (course_id, title, competency, level, duration, language, match_score, source, description, learning_objectives, provider, deep_link_url, course_type, role_target, recommendation_reason, enrolled_count, rating) VALUES
-    ('IGOT-STAT-101', 'National Accounts Framework & SNA 2008', 'National Accounts & GDP Computation', 'Intermediate', '6 hours', 'English & Hindi', 96.00, 'iGOT Karmayogi', 'Comprehensive guide to national account compilation, gross value added (GVA) calculation, and sectoral deflators.', ARRAY['Understand SNA 2008 principles', 'Calculate quarterly GVA estimates', 'Apply CPI/WPI deflators'], 'National Statistical Systems Training Academy (NSSTA)', 'https://igotkarmayogi.gov.in/learn/course/IGOT-STAT-101', 'Self-Paced', ARRAY['Statistical Officer', 'Director'], 'Directly addresses identified gap in National Accounts compilation', 342, 4.85),
-    ('IGOT-STAT-204', 'Sample Survey Design & Variance Estimation', 'Advanced Sample Survey Design & Estimation', 'Advanced', '8 hours', 'English', 94.00, 'iGOT Karmayogi', 'Master complex sample designs, non-response adjustments, and bootstrap/jackknife variance estimation methods.', ARRAY['Design multi-stage stratified surveys', 'Calculate sampling weights & design effects', 'Conduct non-sampling error audits'], 'NSSTA & ISI Kolkata', 'https://igotkarmayogi.gov.in/learn/course/IGOT-STAT-204', 'Interactive Workshop', ARRAY['Senior Statistical Officer', 'Deputy Director'], 'High relevance to upcoming Periodic Labour Force Survey (PLFS)', 512, 4.90),
-    ('IGOT-TECH-302', 'Python for Official Data Analytics', 'Data Visualization & Analytics in R/Python', 'Basic', '4 hours', 'English', 89.00, 'iGOT Integration Demo', 'Hands-on training on pandas, numpy, and plotnine for statistical workflow automation.', ARRAY['Wrangle microdata files', 'Automate data validation pipelines', 'Build summary tables'], 'NSSTA Digital Cell', 'https://igotkarmayogi.gov.in/learn/course/IGOT-TECH-302', 'Micro-Credential', ARRAY['Junior Statistical Officer', 'Statistical Inspector'], 'Closes technical skill gap in modern data processing tools', 789, 4.75),
-    ('IGOT-AI-401', 'AI/ML Applications in Survey Imputation', 'AI & Machine Learning in Official Statistics', 'Advanced', '10 hours', 'English', 92.00, 'NSSTA Institutional', 'Leverage Random Forest and XGBoost for missing data imputation in large-scale socio-economic surveys.', ARRAY['Implement KNN and ML imputation models', 'Detect outliers in survey microdata', 'Validate imputed datasets'], 'IIT Kharagpur & MoSPI AI Division', 'https://igotkarmayogi.gov.in/learn/course/IGOT-AI-401', 'Blended Training', ARRAY['Data Analyst', 'Joint Director'], 'Priority gap identified by KARM-AI engine for high-impact innovation', 215, 4.80)
+    ('IGOT-DEMO-001', 'Advanced Survey Methodology', 'Survey Methodology', 'Intermediate', '4 hours', 'English', 96.00, 'Prototype iGOT Resource Mapping', 'Comprehensive guide to sampling frames, questionnaire design, field collection protocols, and response error minimization in national statistical operations.', ARRAY['Master probability sampling designs for national socio-economic surveys', 'Design error-resilient field collection forms with digital validation rules', 'Calculate design effects and weights for complex survey data'], 'National Statistical Systems Training Academy (NSSTA)', 'https://igotkarmayogi.gov.in/course/igot-demo-001', 'Self-Paced', ARRAY['Statistical Officer', 'Senior Field Investigator'], 'Recommended because your Survey Methodology competency is currently 43%, while your role requires a target level of 80%.', 1420, 4.90),
+    ('IGOT-DEMO-004', 'Statistical Computing with Python for Public Policy', 'Python for Data Science', 'Intermediate', '8 hours', 'English', 94.00, 'Prototype iGOT Resource Mapping', 'Hands-on data manipulation, automated reporting, regression modelling, and pandas/numpy workflow tailored for government statistical divisions.', ARRAY['Wrangle large microdata sets using pandas and numpy', 'Automate statistical tables generation', 'Perform parametric hypothesis tests'], 'Digital India Academy / iGOT', 'https://igotkarmayogi.gov.in/course/igot-demo-004', 'Self-Paced', ARRAY['Statistical Officer', 'Data Analyst'], 'Critical for modernizing workflow efficiency from legacy spreadsheet processing to automated Python scripting.', 3150, 4.90),
+    ('IGOT-DEMO-005', 'SQL & Relational Data Engineering for Analysts', 'SQL & Data Engineering', 'Intermediate', '5 hours', 'English', 89.00, 'Prototype iGOT Resource Mapping', 'Relational database querying, joins, aggregate window functions, indexing, and schema design for government statistical registries.', ARRAY['Write complex multi-table SQL JOIN queries for census microdata', 'Optimize query speed using indexes', 'Construct database views for real-time reporting dashboards'], 'National Informatics Centre (NIC) & iGOT', 'https://igotkarmayogi.gov.in/course/igot-demo-005', 'Self-Paced', ARRAY['Statistical Officer', 'Database Administrator'], 'Recommended because SQL is required for your current role and your current competency is 40%.', 2890, 4.80)
 ON CONFLICT (course_id) DO NOTHING;
 
-INSERT INTO public.competency_mappings (stat_skill_competency, igot_competency, match_percentage, domain, status) VALUES
-    ('GDP & National Income Accounting', 'National Accounts & SNA 2008 Standards', 98.00, 'Macroeconomic Statistics', 'Mapped'),
-    ('Large-Scale Survey Sampling', 'Sample Design & Estimation Techniques', 95.00, 'Survey Operations', 'Mapped'),
-    ('Automated Data Cleansing & EDA', 'Python & R Data Analytics for Public Sector', 91.00, 'Data Science', 'Auto-Aligned'),
-    ('Machine Learning Imputation', 'AI/ML in Official Statistics & Survey Analytics', 93.00, 'Advanced Analytics', 'Pending Review')
+INSERT INTO public.future_skills (skill_name, category, current_readiness, target_readiness, reason, target_roles) VALUES
+    ('Automated Survey Imputation via Machine Learning', 'AI & Modern Analytics', 25.00, 75.00, 'MoSPI modern data architecture strategy requires replacing manual rule-based unit non-response imputation with Random Forest & XGBoost pipelines by Q4 2026.', ARRAY['Statistical Officer', 'Data Analyst']),
+    ('High-Frequency Satellite Nightlight Analytics', 'Geospatial & Big Data', 30.00, 70.00, 'Required for supplementary district-level GDP proxy calculations between decennial economic census rounds.', ARRAY['GIS Specialist', 'Economic Analyst']),
+    ('Differential Privacy & Confidential Compute for Microdata', 'Data Security & Governance', 45.00, 80.00, 'Compliance with Digital Personal Data Protection (DPDP) Act for public release of socio-economic survey microdata.', ARRAY['Data Custodian', 'Statistical Officer'])
+ON CONFLICT (skill_name) DO NOTHING;
+
+INSERT INTO public.department_interventions (department, top_skill_gaps, affected_learner_count, suggested_training, priority, ai_summary) VALUES
+    ('National Sample Survey Office (NSSO)', ARRAY['AI & Machine Learning (40% Deficit)', 'Survey Methodology (37% Deficit)'], 420, 'NSSTA CAPI & Imputation Protocol Workshop', 'Critical', 'The Survey Division shows a critical cluster gap in CAPI digital field validation and ML-assisted survey non-response imputation. Implementing an institutional workshop at NSSTA will improve field data accuracy by an estimated 28 percentage points across 420 officers.'),
+    ('Economic Statistics Division (ESD)', ARRAY['Statistical Forecasting (35% Deficit)', 'Price Indices (33% Deficit)'], 280, 'Laspeyres Base Revisions & Time Series Masterclass', 'High', 'Economic Statistics officers require targeted elevation in quarterly Consumer Price Index (CPI) basket weighting and seasonal ARIMA adjustments prior to the upcoming base year update.')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO public.integration_settings (mode, api_base_url, client_id, auth_mechanism, auto_sync_interval_minutes, sync_on_gap_detection, enable_deep_linking) VALUES

@@ -1,31 +1,33 @@
 import React from 'react';
 import { OrganizationSkillHeatmap } from './OrganizationSkillHeatmap';
-import { BarChart3, TrendingUp, Users, BookOpen, CheckCircle2, Award, Clock } from 'lucide-react';
+import { DepartmentIntelligenceCard } from './DepartmentIntelligenceCard';
+import { FutureSkillReadiness } from './FutureSkillReadiness';
+import { BarChart3, TrendingUp, Users, BookOpen, CheckCircle2, Award, Clock, Compass, ShieldCheck } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
   return (
     <div className="space-y-8">
       
-      {/* Header Banner (Section 32) */}
+      {/* Header Banner */}
       <div className="card-panel rounded-xl p-6 sm:p-8 bg-white border border-slate-200 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center space-x-2 mb-1">
               <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-blue-50 text-blue-900 border border-blue-200">
-                Training Administrator Portal
+                Department Administrator & Capacity Analytics
               </span>
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                32. Organization Skill Intelligence
+                Organization Skill Intelligence & Capacity Dashboard
               </h1>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 font-medium">
-              Ministry of Statistics & Programme Implementation (MoSPI) National Capacity Analytics
+              Ministry of Statistics & Programme Implementation (MoSPI) continuous statistical workforce analytics.
             </p>
           </div>
         </div>
       </div>
 
-      {/* KPI Cards (Section 32) */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="card-panel rounded-lg p-3.5 bg-white border border-slate-200 shadow-2xs">
           <span className="text-[11px] text-slate-500 font-bold block mb-0.5">Total Officials</span>
@@ -64,14 +66,20 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Department-Level Intelligence & Interventions */}
+      <DepartmentIntelligenceCard />
+
       {/* Organization Skill Heatmap */}
       <OrganizationSkillHeatmap />
 
-      {/* Training Effectiveness (Section 35) */}
+      {/* Future Skill Readiness Overview */}
+      <FutureSkillReadiness />
+
+      {/* Training Effectiveness */}
       <div className="card-panel rounded-xl p-6 bg-white border border-slate-200 shadow-sm space-y-4">
         <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
           <Award className="h-4 w-4 text-emerald-700" />
-          <span>35. Training Effectiveness & Competency Improvement</span>
+          <span>Training Effectiveness & Continuous Competency Loop Impact</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-bold">
@@ -98,3 +106,4 @@ export const AdminDashboard: React.FC = () => {
     </div>
   );
 };
+
